@@ -4,11 +4,15 @@ import { Text, Button, CheckBox } from '@ui-kitten/components';
 import * as firebase from 'firebase';
 import ToDoTask from './ToDoTask';
 import AddTask from './AddTask';
+import { store } from 'react-notifications-component';
+import useLocalStorage from '../utils/useLocalStorage';
 
 const Group = ({
   tasks, name, id, visible, toggleVisible,
 }) => {
   const [allowModify, setAllowModify] = useState(false);
+  const [showId, setShowId] = useState(false);
+  const [groupsEnrolled, setGroupsEnrolled] = useLocalStorage('groupsEnrolled', false);
   return (
     <View>
       <View style={styles.titleSection}>
@@ -19,6 +23,32 @@ const Group = ({
           style={styles.checkbox}
           text="Pokaż zadania"
         />
+
+        {!allowModify && !showId && (
+          <Button
+            style={styles.shareButton}
+            status="warning"
+            appearance="outline"
+            onPress={() => {
+              navigator.clipboard.writeText(id);
+              store.addNotification({
+                title: 'Skopiowano!',
+                message: 'Nazwa grupy skopiowana do schowka',
+                type: 'success',
+                insert: 'top',
+                container: 'top-right',
+                animationIn: ['animated', 'fadeIn'],
+                animationOut: ['animated', 'fadeOut'],
+                dismiss: {
+                  duration: 5000,
+                  onScreen: true,
+                },
+              });
+            }}
+          >
+            Udostępnij
+          </Button>
+        )}
         {!allowModify && (
           <Button
             style={styles.modifyButton}
@@ -44,6 +74,35 @@ const Group = ({
             status="danger"
             style={styles.removeButton}
             appearance="outline"
+            onPress={() => {
+              setGroupsEnrolled({
+                ...groupsEnrolled,
+                [id]: false,
+              });
+              setAllowModify(false);
+              store.addNotification({
+                title: 'Opuszczono grupę!',
+                message: 'Odśwież stronę aby zobaczyć efekt',
+                type: 'info',
+                insert: 'top',
+                container: 'top-right',
+                animationIn: ['animated', 'fadeIn'],
+                animationOut: ['animated', 'fadeOut'],
+                dismiss: {
+                  duration: 5000,
+                  onScreen: true,
+                },
+              });
+            }}
+          >
+            Opuść grupę
+          </Button>
+        )}
+        {allowModify && (
+          <Button
+            status="danger"
+            style={styles.removeButton}
+            appearance="outline"
             onPress={() => firebase
               .database()
               .ref(`groups/${id}`)
@@ -52,6 +111,7 @@ const Group = ({
             Usuń grupę u wszystkich
           </Button>
         )}
+
       </View>
       {visible && (
         <>
@@ -66,7 +126,7 @@ const Group = ({
                 allowModify={allowModify}
               />
             ))}
-          <AddTask groupId={id} />
+          <AddTask groupId={id}/>
         </>
       )}
     </View>
@@ -86,6 +146,9 @@ const styles = {
     margin: 15,
   },
   modifyButton: {
+    marginLeft: 2,
+  },
+  shareButton: {
     marginLeft: 'auto',
   },
   removeButton: {
