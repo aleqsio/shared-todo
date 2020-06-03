@@ -8,6 +8,9 @@ import AddGroup from './components/AddGroup';
 import Group from './components/Group';
 import Card from './components/Card';
 import useLocalStorage from './utils/useLocalStorage';
+import ReactNotification from 'react-notifications-component';
+import 'react-notifications-component/dist/theme.css';
+import EnrollToGroup from './components/EnrollToGroup';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDMuhkJjKYlkr4abNkVuokjjLV4JGguIqM',
@@ -20,9 +23,14 @@ const Root = ({ groups }) => {
     'groups-visible',
     {},
   );
+  const [groupsEnrolled, setGroupsEnrolled] = useLocalStorage(
+    'groupsEnrolled',
+    {},
+  );
   return (
     <View style={styles.container}>
       {groups
+        .filter((group) => groupsEnrolled[group.id] === true)
         .sort((a, b) => -groupsVisible[a.id] + groupsVisible[b.id])
         .map((group) => (
           <View key={group.id}>
@@ -41,7 +49,10 @@ const Root = ({ groups }) => {
           </View>
         ))}
       <Card>
-        <AddGroup />
+        <AddGroup/>
+      </Card>
+      <Card>
+        <EnrollToGroup/>
       </Card>
     </View>
   );
@@ -49,13 +60,15 @@ const Root = ({ groups }) => {
 
 const App = () => {
   const [values, loading, error] = useListVals(
-    firebase.database().ref('groups'),
+    firebase.database()
+      .ref('groups'),
     { keyField: 'id' },
   );
   console.log(values);
   return (
     <ApplicationProvider mapping={mapping} theme={lightTheme}>
-      {loading ? <Spinner /> : <Root groups={values || []} />}
+      <ReactNotification/>
+      {loading ? <Spinner/> : <Root groups={values || []}/>}
     </ApplicationProvider>
   );
 };
