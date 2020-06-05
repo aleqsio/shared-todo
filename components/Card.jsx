@@ -15,9 +15,7 @@ const styles = {
     shadowOpacity: 0.22,
     shadowRadius: 2.22,
     backgroundColor: 'white',
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    width: 650,
+    maxWidth: 650,
     elevation: 3,
   },
 };

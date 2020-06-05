@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Alert } from 'react-native';
+import { View, Image } from 'react-native';
 import { CheckBox, Text, Button } from '@ui-kitten/components';
 import TimeAgo from 'javascript-time-ago';
 import pl from 'javascript-time-ago/locale/pl';
@@ -9,15 +9,12 @@ import useLocalStorage from '../utils/useLocalStorage';
 TimeAgo.addLocale(pl);
 const timeAgo = new TimeAgo('pl-PL');
 const TASK_APPROACHING = 3 * 24 * 60 * 60 * 1000;
-const ToDoTask = ({
+const ImageTask = ({
   name, deadline, id, groupId, allowModify,
 }) => {
   const [checked, setChecked] = useLocalStorage(`task-${id}`, false);
   const deleteTask = () => {
-    firebase
-      .database()
-      .ref(`groups/${groupId}/tasks/${id}`)
-      .remove();
+    firebase.database().ref(`groups/${groupId}/tasks/${id}`).remove();
   };
   return (
     <View style={styles.container}>
@@ -28,9 +25,8 @@ const ToDoTask = ({
         }}
         style={styles.checkbox}
       />
-      <Text style={[styles.name, checked && styles.checked]} category="s1">
-        {name}
-      </Text>
+      <Image source={{ uri: name }} style={[styles.image]} />
+
       <Text
         style={[styles.deadline]}
         status={
@@ -44,14 +40,14 @@ const ToDoTask = ({
           && timeAgo.format(new Date(deadline))}
       </Text>
       {allowModify && (
-      <Button
-        style={styles.button}
-        status="danger"
-        appearance="outline"
-        onPress={deleteTask}
-      >
-        Usuń zadanie u wszystkich
-      </Button>
+        <Button
+          style={styles.button}
+          status="danger"
+          appearance="outline"
+          onPress={deleteTask}
+        >
+          Usuń zadanie u wszystkich
+        </Button>
       )}
     </View>
   );
@@ -70,16 +66,17 @@ const styles = {
   checkbox: {
     margin: 15,
   },
-  checked: {
-    textDecorationLine: 'line-through',
-    color: '#888',
+  image: {
+    flex: 1,
+    minHeight: 300,
+    margin: 10,
   },
   button: {
     marginLeft: 'auto',
   },
   name: {
     // fontWeight: 'bold',
-    // fontSize: '1.3em',
+    fontSize: '1.3em',
   },
 };
-export default ToDoTask;
+export default ImageTask;

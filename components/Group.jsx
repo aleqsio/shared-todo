@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
-import { View } from 'react-native';
+import { View, Clipboard } from 'react-native';
 import { Text, Button, CheckBox } from '@ui-kitten/components';
 import * as firebase from 'firebase';
 import ToDoTask from './ToDoTask';
 import AddTask from './AddTask';
-import { store } from 'react-notifications-component';
-import useLocalStorage from '../utils/useLocalStorage';
+import ImageTask from './ImageTask';
 
 const Group = ({
-  tasks, name, id, visible, toggleVisible,
+  tasks,
+  name,
+  id,
+  visible,
+  toggleVisible,
+  setGroupsEnrolled,
+  groupsEnrolled,
 }) => {
   const [allowModify, setAllowModify] = useState(false);
-  const [showId, setShowId] = useState(false);
-  const [groupsEnrolled, setGroupsEnrolled] = useLocalStorage('groupsEnrolled', false);
+  const [shared, setShared] = useState(false);
   return (
     <View>
       <View style={styles.titleSection}>
@@ -24,31 +28,27 @@ const Group = ({
           text="Pokaż zadania"
         />
 
-        {!allowModify && !showId && (
-          <Button
-            style={styles.shareButton}
-            status="warning"
-            appearance="outline"
-            onPress={() => {
-              navigator.clipboard.writeText(id);
-              store.addNotification({
-                title: 'Skopiowano!',
-                message: 'Nazwa grupy skopiowana do schowka',
-                type: 'success',
-                insert: 'top',
-                container: 'top-right',
-                animationIn: ['animated', 'fadeIn'],
-                animationOut: ['animated', 'fadeOut'],
-                dismiss: {
-                  duration: 5000,
-                  onScreen: true,
-                },
-              });
-            }}
-          >
-            Udostępnij
-          </Button>
-        )}
+        {!allowModify
+          && (!shared ? (
+            <Button
+              style={styles.shareButton}
+              status="warning"
+              appearance="outline"
+              onPress={() => {
+                setShared(true);
+                Clipboard.setString(id);
+                setTimeout(() => {
+                  setShared(false);
+                }, 1000);
+              }}
+            >
+              Udostępnij
+            </Button>
+          ) : (
+            <Text status="warning" style={[styles.shareButton, { margin: 10 }]}>
+              skopiowano
+            </Text>
+          ))}
         {!allowModify && (
           <Button
             style={styles.modifyButton}
@@ -103,21 +103,25 @@ const Group = ({
             status="danger"
             style={styles.removeButton}
             appearance="outline"
-            onPress={() => firebase
-              .database()
-              .ref(`groups/${id}`)
-              .remove()}
+            onPress={() => firebase.database().ref(`groups/${id}`).remove()}
           >
             Usuń grupę u wszystkich
           </Button>
         )}
-
       </View>
       {visible && (
         <>
           {Object.entries(tasks || {})
             .sort((a, b) => (a[1].deadline || '').localeCompare(b[1].deadline || ''))
-            .map(([taskId, task]) => (
+            .map(([taskId, task]) => (task.name.startsWith('http') ? (
+              <ImageTask
+                key={taskId}
+                {...task}
+                id={taskId}
+                groupId={id}
+                allowModify={allowModify}
+              />
+            ) : (
               <ToDoTask
                 key={taskId}
                 {...task}
@@ -125,8 +129,8 @@ const Group = ({
                 groupId={id}
                 allowModify={allowModify}
               />
-            ))}
-          <AddTask groupId={id}/>
+            )))}
+          <AddTask groupId={id} />
         </>
       )}
     </View>
@@ -137,6 +141,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
   },
   id: {
     color: '#bbb',

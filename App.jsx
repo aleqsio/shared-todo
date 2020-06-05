@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, ScrollView } from 'react-native';
 import { mapping, light as lightTheme } from '@eva-design/eva';
 import { ApplicationProvider, Spinner, Text } from '@ui-kitten/components';
 import * as firebase from 'firebase';
@@ -8,8 +8,6 @@ import AddGroup from './components/AddGroup';
 import Group from './components/Group';
 import Card from './components/Card';
 import useLocalStorage from './utils/useLocalStorage';
-import ReactNotification from 'react-notifications-component';
-import 'react-notifications-component/dist/theme.css';
 import EnrollToGroup from './components/EnrollToGroup';
 
 const firebaseConfig = {
@@ -28,7 +26,8 @@ const Root = ({ groups }) => {
     {},
   );
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.middleContainer}>
+      {/* <View style={styles.middleContainer}> */}
       {groups
         .filter((group) => groupsEnrolled[group.id] === true)
         .sort((a, b) => -groupsVisible[a.id] + groupsVisible[b.id])
@@ -38,6 +37,8 @@ const Root = ({ groups }) => {
               <Group
                 {...group}
                 visible={groupsVisible[group.id]}
+                setGroupsEnrolled={setGroupsEnrolled}
+                groupsEnrolled={groupsEnrolled}
                 toggleVisible={() => {
                   setGroupsVisible({
                     ...groupsVisible,
@@ -49,34 +50,51 @@ const Root = ({ groups }) => {
           </View>
         ))}
       <Card>
-        <AddGroup/>
+        <AddGroup
+          setGroupsEnrolled={setGroupsEnrolled}
+          groupsEnrolled={groupsEnrolled}
+        />
       </Card>
       <Card>
-        <EnrollToGroup/>
+        <EnrollToGroup
+          setGroupsEnrolled={setGroupsEnrolled}
+          groupsEnrolled={groupsEnrolled}
+        />
       </Card>
-    </View>
+      {/* </View> */}
+    </ScrollView>
   );
 };
 
 const App = () => {
   const [values, loading, error] = useListVals(
-    firebase.database()
-      .ref('groups'),
+    firebase.database().ref('groups'),
     { keyField: 'id' },
   );
-  console.log(values);
+  // console.log(values);
   return (
     <ApplicationProvider mapping={mapping} theme={lightTheme}>
-      <ReactNotification/>
-      {loading ? <Spinner/> : <Root groups={values || []}/>}
+      {loading ? <Spinner /> : <Root groups={values || []} />}
     </ApplicationProvider>
   );
 };
 const styles = StyleSheet.create({
   container: {
-    padding: 100,
+    paddingTop: 100,
     minHeight: '100%',
+    width: '100%',
+    flexShrink: 0,
+    // display: 'flex',
+    // flexDirection: 'row',
+    // justifyContent: 'center',
     backgroundColor: '#ddd',
+  },
+  middleContainer: {
+    // marginLeft: 'auto',
+    // marginRight: 'auto',
+    alignSelf: 'center',
+    display: 'flex',
+    flexDirection: 'column',
   },
 });
 export default App;

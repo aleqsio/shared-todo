@@ -77,6 +77,7 @@ const styles = {
     justifyContent: 'flex-start',
     alignItems: 'center',
     marginTop: 15,
+    flexWrap: 'wrap',
   },
   id: {
     color: '#bbb',
